@@ -1,0 +1,48 @@
+﻿version: '3.8'
+services:
+  mongo:
+    image: mongo:5
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  invoice-service:
+    build: ./invoice-task
+    container_name: invoice-task
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/invoices
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+    ports:
+      - "3000:3000"
+
+  email-sender:
+    build: ./email-task
+    container_name: email-task
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+      - EMAIL_FROM=imail.amiri@gmail.com
+      - EMAIL_TO=iman_2700@yahoo.com
+      - GMAIL_USER=imail.amiri@gmail.com
+      - GMAIL_PASS=umab ptnk wnvh djek
+    ports:
+      - "3001:3001"
+
+volumes:
+  mongo-data:
